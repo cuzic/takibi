@@ -1,0 +1,39 @@
+#!/usr/bin/ruby
+# encoding: utf-8
+
+require 'optparse'
+
+TakibiConf = {}
+TAKIBI_ROOT = File.join(File.dirname(__FILE__), "..")
+opt = OptionParser.new
+opt.on("--feed feed") do |feed|
+  TakibiConf["feed"] = feed
+end
+
+opt.on("--action action") do |action|
+  TakibiConf["action"] = action
+end
+
+opt.on("-o filename", "--output") do |filename|
+  TakibiConf["filename"] = filename
+end
+opt.parse!(ARGV)
+
+require File.join(TAKIBI_ROOT, "lib", "takibi")
+
+feed = TakibiConf["feed"]
+require File.join(TAKIBI_ROOT, "plugins", feed, feed + "_formatter")
+
+case TakibiConf["action"]
+when "crawl_rss"
+  require File.join(TAKIBI_ROOT, "plugins", feed, feed + "_crawler")
+  Crawler = Takibi.const_get(feed.capitalize + "Crawler")
+  Crawler.crawl_rss
+when "crawl_article"
+  Crawler = Takibi.const_get(feed.capitalize + "Crawler")
+  Crawler.crawl_article
+when "epub"
+  Formatter = Takibi.const_get(feed.capitalize + "Formatter")
+  Formatter.epub TakibiConf["filename"]
+end
+

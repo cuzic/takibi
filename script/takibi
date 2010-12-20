@@ -6,33 +6,56 @@ require 'optparse'
 TakibiConf = {}
 TAKIBI_ROOT = File.join(File.dirname(__FILE__), "..")
 opt = OptionParser.new
-opt.on("--feed feed") do |feed|
+
+feeds = Dir.entries("plugins").reject{|f| f.include?(".")}.map(&:to_sym)
+opt.on("-f feed", "--feed feed", feeds,
+       "specify a feed for action") do |feed|
   TakibiConf["feed"] = feed
 end
 
-opt.on("--action action") do |action|
+opt.on("-a action", "--action action",
+       [:crawl_rss, :crawl_article, :epub]) do |action|
   TakibiConf["action"] = action
 end
 
-opt.on("-o filename", "--output") do |filename|
+opt.on("-o filename", "--output filename", nil,
+       "output filename (usually used  --action epub)") do |filename|
   TakibiConf["filename"] = filename
 end
 opt.parse!(ARGV)
 
 require File.join(TAKIBI_ROOT, "lib", "takibi")
 
-feed = TakibiConf["feed"]
-require File.join(TAKIBI_ROOT, "plugins", feed, feed + "_formatter")
-
+feed = TakibiConf["feed"].to_s
+plugin_dir = if feed then
+               File.join(TAKIBI_ROOT, "plugins", feed.to_s)
+             else
+               File.join(TAKIBI_ROOT, "plugins", "*")
+             end
 case TakibiConf["action"]
-when "crawl_rss"
-  require File.join(TAKIBI_ROOT, "plugins", feed, feed + "_crawler")
-  Crawler = Takibi.const_get(feed.capitalize + "Crawler")
-  Crawler.crawl_rss
-when "crawl_article"
+when :crawl_rss
+  Dir.glob(File.join(plugin_dir, "*_crawler.rb")) do |filename|
+    require filename
+  end
+  if feed then
+    Crawler = Takibi.const_get(feed.capitalize + "Crawler")
+    Crawler.crawl_rss
+  else
+    $stderr.puts "please specify a feed"
+  end
+when :crawl_article
+  Dir.glob(File.join(plugin_dir, "*_crawler.rb")) do |filename|
+    require filename
+  end
+  Dir.glob(File.join(plugin_dir, "*_parser.rb")) do |filename|
+    require filename
+  end
   Crawler = Takibi.const_get(feed.capitalize + "Crawler")
   Crawler.crawl_article
-when "epub"
+when :epub
+  Dir.glob(File.join(plugin_dir, "*_formater.rb")) do |filename|
+    require filename
+  end
   Formatter = Takibi.const_get(feed.capitalize + "Formatter")
   Formatter.epub TakibiConf["filename"]
 end

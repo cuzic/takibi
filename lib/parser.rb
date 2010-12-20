@@ -6,6 +6,8 @@ module Takibi
 end
 
 class Takibi::Parser
+  extend Takibi::ClassAttribute
+
   def self.find_parser   src, url
     parser_files_glob =
       File.join(TAKIBI_ROOT, "plugins", "*", "*_parser.rb")
@@ -55,14 +57,8 @@ class Takibi::Parser
   end
 
   @@default_title_xpath = '//div[@class="title" or @id="title"]/text()'
-  def self.title_xpath xpath = nil
-    if xpath then
-      @title_xpath = xpath
-    elsif defined? @title_xpath and @title_xpath then
-      return @title_xpath
-    else
-      return @@default_title_xpath
-    end
+  civar :title_xpath do
+    @@default_title_xpath
   end
 
   def self.extract_title doc, url
@@ -72,14 +68,8 @@ class Takibi::Parser
 
   @@default_published_time_xpath =
     '//div[@class="date" or @id="date"]/text()'
-  def self.published_time_xpath xpath = nil
-    if xpath then
-      @published_time_xpath = xpath
-    elsif defined? @published_time_xpath and @published_time_xpath then
-      return @published_time_xpath
-    else
-      return @@default_published_time_xpath
-    end
+  civar :published_time_xpath do
+    @@default_published_time_xpath
   end
 
   def self.extract_published_time doc, url
@@ -105,14 +95,8 @@ class Takibi::Parser
   end
 
   @@default_author_xpath = '//div[@class="author" or @id="author"]/text()'
-  def self.author_xpath xpath = nil
-    if xpath then
-      @author_xpath = xpath
-    elsif defined? @author_xpath and @author_xpath then
-      return @author_xpath
-    else
-      return @@default_author_xpath
-    end
+  civar :author_xpath do
+    @@default_author_xpath
   end
   def self.extract_author doc, url
     author = doc.xpath(author_xpath).text.strip
@@ -120,25 +104,15 @@ class Takibi::Parser
   end
 
   @@default_images_xpath = '//div[@class="images" or @id="images"]'
-  def self.images_xpath xpath = nil
-    if xpath then
-      @images_xpath = xpath
-    elsif defined? @images_xpath and @images_xpath
-      return @images_xpath
-    else
-      return @@default_images_xpath
-    end
+  civar :images_xpath do
+    @@default_images_xpath
   end
+
   @@default_image_caption_xpath = './/text()'
-  def self.image_caption_xpath xpath = nil
-    if xpath then
-      @image_caption_xpath = xpath
-    elsif defined? @image_caption_xpath and @image_caption_xpath
-      return @image_caption_xpath
-    else
-      return @@default_image_caption_xpath
-    end
+  civar :image_caption_xpath do
+    @@default_image_caption_xpath
   end
+
   def self.extract_images doc, url
     doc.xpath(images_xpath).map do |div|
       path = div.xpath('.//img').first[:src]
@@ -151,15 +125,7 @@ class Takibi::Parser
   end
 
   @@default_body_xpath = '//div[@id="main-contents"]'
-  def self.body_xpath xpath = nil
-    if xpath then
-      @body_xpath = xpath
-    elsif defined? @body_xpath and @body_xpath
-      return @body_xpath
-    else
-      return @@default_body_xpath
-    end
-  end
+  civar :body_xpath
   def self.extract_body doc, url
     doc.xpath("//comment()").remove
     doc.xpath("//script").remove
@@ -171,11 +137,14 @@ class Takibi::Parser
     end
 
     body = doc.xpath(body_xpath).first
-    body.xpath('.//a').each do |anchor|
-      path = anchor[:href].strip
-      url  = URI.join(url, path).to_s
-      anchor.set_attribute("href", url)
-      anchor.remove_attribute "onclick"
+    body.xpath('.//a[@href]').each do |anchor|
+      begin
+        path = anchor[:href].strip
+        url  = URI.join(url, path).to_s
+        anchor.set_attribute("href", url)
+        anchor.remove_attribute "onclick"
+      rescue 
+      end
     end
 
     noisy_elems_xpaths.each do |xpath|
@@ -188,15 +157,7 @@ class Takibi::Parser
   end
 
   @@default_next_link_xpath = '//div[@class="next_p"]/a'
-  def self.next_link_xpath xpath = nil
-    if xpath then
-      @next_link_xpath = xpath
-    elsif defined? @next_link_xpath and @next_link_xpath
-      return @next_link_xpath
-    else
-      return @@default_next_link_xpath
-    end
-  end
+  civar :next_link_xpath
   def self.extract_next_link doc, link
     next_link = doc.xpath(next_link_xpath).first[:href].strip rescue nil
     return next_link
@@ -204,13 +165,7 @@ class Takibi::Parser
 
   @@default_noisy_elems_xpaths =
       ['.//div[@id="mp-ie"]', './/div[@class="text-ad-chumoku"]']
-  def self.noisy_elems_xpaths xpaths = nil
-    if xpaths then
-      @noisy_elems_xpaths = xpaths
-    elsif defined? @noisy_elems_xpaths and @noisy_elems_xpaths
-      return @noisy_elems_xpaths
-    else
-      return @@default_noisy_elems_xpaths
-    end
+  civar :noisy_elems_xpaths do
+    return @@default_noisy_elems_xpaths
   end
 end

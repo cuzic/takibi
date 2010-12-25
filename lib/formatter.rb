@@ -113,8 +113,10 @@ module Takibi
       toc_articles = []
       articles     = []
       images       = []
+
+      ids = []
       Articles.fetch filter_options do |record|
-        md5 = record["md5"].unpack("H*").first
+        md5 = record["md5"]
         filename = md5 + ".xhtml"
         opf_items << {
           :id => md5,
@@ -153,7 +155,7 @@ module Takibi
         @title     = name + " " + Time.now.strftime("%Y-%m-%d")
         @author    = name
         @publisher = name
-        @items     = opf_items
+        @items     = opf_items.uniq
         @itemrefs  = opf_itemrefs
       end
 

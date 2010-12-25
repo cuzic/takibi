@@ -26,4 +26,10 @@ class HttpClient::CachedClient
     end
     return value
   end
+
+  def get_latest(url)
+    value = @client.get(url)
+    @store.put(url, value)
+    return value
+  end
 end

@@ -97,7 +97,14 @@ module Takibi
     end
 
     def self.fetch filter_options
-      db[table_name].filter(filter_options).each do |row|
+      recordset = db[table_name]
+      case filter_options
+      when Array
+        recordset = filter_options.inject(recordset) do |rs, opt|
+          rs.filter(opt)
+        end
+      end
+      recordset.each do |row|
         yield fetch_row(row)
       end
     end

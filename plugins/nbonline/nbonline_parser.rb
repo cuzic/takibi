@@ -1,13 +1,9 @@
 # coding: utf-8
 
-require 'ruby-debug'
-
 module Takibi
   class NbonlineParser < Parser
   end
 end
-
-Debugger.start
 
 class Takibi::NbonlineParser
   def self.extract src, url

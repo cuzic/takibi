@@ -17,7 +17,7 @@
   <h1><%=h @title %></h1>
   <div id="info">
    <%=h @author %><br/>
-   [ <%=h @published_time.strftime("%Y年%m月%d日%H時%M分") %>
+   [ <%=h @published_time.strftime("%Y年%m月%d日%H時%M分") rescue "" %>
    | <a href="<%=h @url %>">原文へ</a> ]
   </div>
   <%- unless @images.empty? -%>

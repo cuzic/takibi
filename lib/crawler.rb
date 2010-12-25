@@ -6,15 +6,22 @@ require File.join(TAKIBI_ROOT, "lib", "model")
 require File.join(TAKIBI_ROOT, "lib", "common")
 
 module Takibi
+  class ParserNotFoundException < StandardError
+  end
+
   class Crawler
-    @@rss_url = nil
+    @rss_url = nil
     def self.rss_url url = ""
-      return @@rss_url if @@rss_url
-      @@rss_url = URI(url)
+      return @rss_url if @rss_url
+      @rss_url = URI(url)
     end
 
     def self.crawl_rss
-      src = httpclient.get(rss_url.to_s)
+      if httpclient.respond_to? :get_latest then
+        src = httpclient.get_latest(rss_url.to_s)
+      else
+        src = httpclient.get(rss_url.to_s)
+      end
       urls = default_rss_parser src
       count = UrlsToCrawl.append_urls urls
     end
@@ -30,17 +37,30 @@ module Takibi
           urls << item.text
         end
       end
+      if urls.empty? then
+        doc.xpath("//item/link").each do |item|
+          urls << item.text
+        end
+      end
       return urls
     end
 
     def self.crawl_article
       UrlsToCrawl.urls_to_crawl do |url|
-        article = get_whole_article url
+        begin
+          article = get_whole_article url
+          if article.nil? then
+            UrlsToCrawl.finish url
+            next
+          end
 
-        after_crawl article
+          after_crawl article
 
-        Articles.regist article
-        UrlsToCrawl.finish url
+          Articles.regist article
+          UrlsToCrawl.finish url
+        rescue Takibi::ParserNotFoundException => e
+          raise e
+        end
       end
     end
 
@@ -48,23 +68,30 @@ module Takibi
       curl = get_canonical_url url
       article = {}
       begin
-          src = httpclient.get curl
-          one_page = Parser.parse src, curl
-          curl = one_page["next_link"]
-          article.update(one_page) do |key, lhs, rhs|
-              case
-              when key == "body"
-                  lhs << "\n" << rhs
-              when key == "images"
-                  lhs.concat rhs
-              when lhs
-                  lhs
-              else
-                  rhs
-              end
+        src = httpclient.get curl
+        one_page = Parser.parse src, curl
+        curl = one_page["next_link"]
+        article.update(one_page) do |key, lhs, rhs|
+          case
+          when key == "body"
+            lhs << "\n" << rhs
+          when key == "images"
+            lhs.concat rhs
+          when lhs
+            lhs
+          else
+            rhs
           end
+        end
       end while curl
       return article
+    rescue StandardError => e
+      case e.to_s
+      when /404 Not Found/
+        return nil
+      else
+        raise e
+      end
     end
 
     def self.get_canonical_url url

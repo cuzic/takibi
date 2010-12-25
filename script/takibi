@@ -18,15 +18,20 @@ opt.on("-a action", "--action action",
   TakibiConf["action"] = action
 end
 
-opt.on("-o filename", "--output filename", nil,
+opt.on("-o filename", "--output filename",
        "output filename (usually used  --action epub)") do |filename|
   TakibiConf["filename"] = filename
+end
+opt.on("-c condition", "--condition condition",
+       "output articles which matches specified condition") do |cond|
+  TakibiConf["condition"] = cond
 end
 opt.parse!(ARGV)
 
 require File.join(TAKIBI_ROOT, "lib", "takibi")
 
-feed = TakibiConf["feed"].to_s
+feed = TakibiConf["feed"]
+feed = feed.to_s if feed
 plugin_dir = if feed then
                File.join(TAKIBI_ROOT, "plugins", feed.to_s)
              else
@@ -38,25 +43,43 @@ when :crawl_rss
     require filename
   end
   if feed then
-    Crawler = Takibi.const_get(feed.capitalize + "Crawler")
-    Crawler.crawl_rss
+    crawler = Takibi.const_get(feed.capitalize + "Crawler")
+    crawler.crawl_rss
   else
-    $stderr.puts "please specify a feed"
+    Takibi.constants.grep(/.+Crawler$/) do |classname|
+      crawler = Takibi.const_get(classname)
+      crawler.crawl_rss
+    end
   end
 when :crawl_article
   Dir.glob(File.join(plugin_dir, "*_crawler.rb")) do |filename|
     require filename
   end
-  Dir.glob(File.join(plugin_dir, "*_parser.rb")) do |filename|
-    require filename
+  if feed then
+    crawler = Takibi.const_get(feed.capitalize + "Crawler")
+    crawler.crawl_article
+  else
+    Takibi.constants.grep(/.+Crawler$/) do |classname|
+      crawler = Takibi.const_get(classname)
+      crawler.crawl_article
+    end
   end
-  Crawler = Takibi.const_get(feed.capitalize + "Crawler")
-  Crawler.crawl_article
 when :epub
-  Dir.glob(File.join(plugin_dir, "*_formater.rb")) do |filename|
-    require filename
+  options = []
+  require File.join(TAKIBI_ROOT, "lib", "formatter.rb")
+  case TakibiConf["condition"]
+  when "last24hours"
+    options << ["published_time > ?", Time.now - 60*60*24]
+  when "last3days"
+    options << ["published_time > ?", Time.now - 60*60*24*3]
+  when "last5days"
+    options << ["published_time > ?", Time.now - 60*60*24*5]
+  when "last7days"
+    options << ["published_time > ?", Time.now - 60*60*24*7]
   end
-  Formatter = Takibi.const_get(feed.capitalize + "Formatter")
-  Formatter.epub TakibiConf["filename"]
+  if feed then
+    options << "feed = '#{feed}'"
+  end
+  Takibi::Formatter.epub TakibiConf["filename"], options
 end
 

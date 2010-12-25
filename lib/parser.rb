@@ -23,6 +23,9 @@ class Takibi::Parser
 
   def self.parse src, url
     parser = find_parser src, url
+    if parser.nil? then
+      raise Takibi::ParserNotFoundException.new(url)
+    end
     parser.extract src, url
   end
 
@@ -56,7 +59,7 @@ class Takibi::Parser
     return article
   end
 
-  @@default_title_xpath = '//div[@class="title" or @id="title"]/text()'
+  @@default_title_xpath = '//meta[@name="DC.title"]/@content'
   civar :title_xpath do
     @@default_title_xpath
   end
@@ -66,8 +69,7 @@ class Takibi::Parser
     return title
   end
 
-  @@default_published_time_xpath =
-    '//div[@class="date" or @id="date"]/text()'
+  @@default_published_time_xpath = '//meta[@name="DC.date"]/@content'
   civar :published_time_xpath do
     @@default_published_time_xpath
   end
@@ -99,16 +101,16 @@ class Takibi::Parser
     @@default_author_xpath
   end
   def self.extract_author doc, url
-    author = doc.xpath(author_xpath).text.strip
+    author = doc.xpath(author_xpath).first.text.strip rescue nil
     return author
   end
 
-  @@default_images_xpath = '//div[@class="images" or @id="images"]'
+  @@default_images_xpath = '//div[img]'
   civar :images_xpath do
     @@default_images_xpath
   end
 
-  @@default_image_caption_xpath = './/text()'
+  @@default_image_caption_xpath = "./text()"
   civar :image_caption_xpath do
     @@default_image_caption_xpath
   end
@@ -137,6 +139,9 @@ class Takibi::Parser
     end
 
     body = doc.xpath(body_xpath).first
+    if body.nil? then
+      return nil
+    end
     body.xpath('.//a[@href]').each do |anchor|
       begin
         path = anchor[:href].strip
@@ -152,14 +157,21 @@ class Takibi::Parser
         node.remove
       end
     end
+    body.xpath(".//form").remove
+    body.xpath(".//input").remove
+    body.xpath(".//select").remove
+    body.xpath(".//textarea").remove
     xml = body.to_xml(:indent => 1, :encoding => "UTF-8")
     return xml
   end
 
   @@default_next_link_xpath = '//div[@class="next_p"]/a'
   civar :next_link_xpath
-  def self.extract_next_link doc, link
+  def self.extract_next_link doc, url
     next_link = doc.xpath(next_link_xpath).first[:href].strip rescue nil
+    if next_link
+      next_link = URI.join(url, next_link).to_s
+    end
     return next_link
   end
 

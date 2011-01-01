@@ -1,0 +1,8 @@
+1. Setup
+  gem install nokogiri
+  gem install sequel
+  gem install log4r
+  gem install uuid
+  gem install zip
+  gem install msgpack
+  gem install mechanize

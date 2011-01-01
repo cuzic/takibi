@@ -23,7 +23,14 @@ module Takibi
         src = httpclient.get(rss_url.to_s)
       end
       urls = default_rss_parser src
-      count = UrlsToCrawl.append_urls urls
+      curls = urls.map do |url|
+        self.get_canonical_url url
+      end
+      count = UrlsToCrawl.append_urls curls
+    end
+
+    def self.get_canonical_url url
+      return url
     end
 
     def self.default_rss_parser src
@@ -65,12 +72,11 @@ module Takibi
     end
 
     def self.get_whole_article url
-      curl = get_canonical_url url
       article = {}
       begin
-        src = httpclient.get curl
-        one_page = Parser.parse src, curl
-        curl = one_page["next_link"]
+        src = httpclient.get url
+        one_page = Parser.parse src, url
+        url = one_page["next_link"]
         article.update(one_page) do |key, lhs, rhs|
           case
           when key == "body"
@@ -83,7 +89,7 @@ module Takibi
             rhs
           end
         end
-      end while curl
+      end while url
       return article
     rescue StandardError => e
       case e.to_s
@@ -92,10 +98,6 @@ module Takibi
       else
         raise e
       end
-    end
-
-    def self.get_canonical_url url
-      return url
     end
 
     def self.after_crawl article

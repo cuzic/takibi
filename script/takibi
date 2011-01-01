@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/ruby -Ku
 # encoding: utf-8
 
 require 'optparse'
@@ -13,7 +13,7 @@ opt.on("-f feed", "--feed feed",
 end
 
 opt.on("-a action", "--action action",
-       [:crawl_rss, :crawl_article, :epub]) do |action|
+       [:crawl_rss, :crawl_article, :epub, :test_article]) do |action|
   TakibiConf["action"] = action
 end
 
@@ -80,5 +80,10 @@ when :epub
     options << "feed = '#{feed}'"
   end
   Takibi::Formatter.epub TakibiConf["filename"], options
+when :test_article
+  require File.join(TAKIBI_ROOT, "lib", "parser.rb")
+  url = "http://news.nifty.com/cs/topics/detail/110101351445/1.htm"
+  h = Takibi::Crawler.get_whole_article	url
+  pp h
 end
 

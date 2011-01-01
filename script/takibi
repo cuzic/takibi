@@ -7,8 +7,7 @@ TakibiConf = {}
 TAKIBI_ROOT = File.join(File.dirname(__FILE__), "..")
 opt = OptionParser.new
 
-feeds = Dir.entries("plugins").reject{|f| f.include?(".")}.map(&:to_sym)
-opt.on("-f feed", "--feed feed", feeds,
+opt.on("-f feed", "--feed feed",
        "specify a feed for action") do |feed|
   TakibiConf["feed"] = feed
 end

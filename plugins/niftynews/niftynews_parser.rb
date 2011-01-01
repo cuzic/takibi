@@ -29,9 +29,24 @@ class Takibi::NiftynewsParser
 
   def self.extract_published_time doc, url
     posted = doc.xpath(published_time_xpath).text.strip
-    digits = posted.scan(/\d\d/).join("")
-    if digits =~ /(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)/ then
-      return Time.local(*$~[1, 5].map(&:to_i))
+    digits = posted.scan(/\d+/).map{|d| "%02d" %d}
+    lengths = digits.map(&:length)
+    case lengths
+    when [4,2,2,4,2,2]
+      yyyymmdd = digits[3,3].join("")
+      if yyyymmdd =~ /(\d{4})(\d\d)(\d\d)$/ then
+        return Time.local(*$~[1, 3].map(&:to_i))
+      end
+    when [2,2,2,2]
+      mmddhhmm = digits.join("")
+      if mmddhhmm =~ /(\d\d)(\d\d)(\d\d)(\d\d)$/ then
+        return Time.local(Time.now.year, *$~[1, 4].map(&:to_i))
+      end
+    when [4,2,2,2,2]
+      yyyymmddhhmm = digits.join("")
+      if yyyymmddhhmm =~ /(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)$/ then
+        return Time.local(*$~[1, 5].map(&:to_i))
+      end
     end
   end
 end

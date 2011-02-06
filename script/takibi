@@ -68,13 +68,13 @@ when :epub
   require File.join(TAKIBI_ROOT, "lib", "formatter.rb")
   case TakibiConf["condition"]
   when "last24hours"
-    options << ["published_time > ?", Time.now - 60*60*24]
+    options << ["created_at > ?", Time.now - 60*60*24]
   when "last3days"
-    options << ["published_time > ?", Time.now - 60*60*24*3]
+    options << ["created_at > ?", Time.now - 60*60*24*3]
   when "last5days"
-    options << ["published_time > ?", Time.now - 60*60*24*5]
+    options << ["created_at > ?", Time.now - 60*60*24*5]
   when "last7days"
-    options << ["published_time > ?", Time.now - 60*60*24*7]
+    options << ["created_at > ?", Time.now - 60*60*24*7]
   end
   if feed then
     options << "feed = '#{feed}'"

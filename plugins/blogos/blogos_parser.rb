@@ -12,7 +12,8 @@ class Takibi::BlogosParser
 
   rss_regex %r(news.livedoor.com/article/detail)
 
-  title_xpath          '//div[@class="article-title"]/h1/text()'
+  #title_xpath          '//div[@class="article-title" or @id="article-title"]/h1/text()'
+  title_xpath          '//meta[@name="title"]/@content'
   published_time_xpath '//p[@class="article-date"]/text()'
   author_xpath         '//p[@class="author"]/text()'
   images_xpath         ''

@@ -135,7 +135,8 @@ module Takibi
           :label_text  => record["title"],
           :content_src => filename
         }
-        toc_articles << [record["title"], filename]
+        toc_articles << [record["title"], record["created_at"],
+		         record["feed"],  filename]
 
         articles << {
           :filename => filename,

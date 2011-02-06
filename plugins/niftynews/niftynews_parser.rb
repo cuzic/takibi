@@ -29,7 +29,7 @@ class Takibi::NiftynewsParser
 
   def self.extract_published_time doc, url
     posted = doc.xpath(published_time_xpath).text.strip
-    digits = posted.scan(/\d+/).map{|d| "%02d" %d}
+    digits = posted.scan(/\d+/).map{|d| "%02d" % d.to_i}
     lengths = digits.map(&:length)
     case lengths
     when [4,2,2,4,2,2]

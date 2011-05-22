@@ -80,7 +80,11 @@ module Takibi
         article.update(one_page) do |key, lhs, rhs|
           case
           when key == "body"
-            lhs << "\n" << rhs
+            if lhs then
+	      lhs << "\n" << rhs
+            else
+              rhs
+            end
           when key == "images"
             lhs.concat rhs
           when lhs

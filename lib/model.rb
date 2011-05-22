@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'sequel'
 require File.join(TAKIBI_ROOT, "lib", "common")
+require File.join(TAKIBI_ROOT, "lib", "db_password")
 
 module Takibi
   class Base
@@ -11,15 +12,28 @@ module Takibi
 
     def self.db
       return @@db if defined? @@db and @@db
+      @@db = self.mysql_db
+    end
+
+    def self.mysql_db
+      Sequel.mysql("cuzicnet_takibi", 
+		    :user => 'cuzicnet_takibi',
+		    :password => $db_password,
+		    :host => 'localhost',
+                    :encoding => 'utf8'
+	)
+    end
+
+    def self.sqlite_db
       db_path = File.join(TAKIBI_ROOT, "data", "takibi.sqlite")
       migrate_path = File.join(TAKIBI_ROOT, "migrate")
       unless File.file? db_path then
         system "sequel -m #{migrate_path} sqlite:///#{db_path}"
       end
-      @@db = Sequel.sqlite(db_path, :timeout => 20_000)
-#      @@db.loggers << create_logger
-#      @@db.sql_log_level = :debug
-      @@db
+      db = Sequel.sqlite(db_path, :timeout => 20_000)
+      db.loggers << create_logger
+      db.sql_log_level = :debug
+      db
     end
 
     def self.table_name name = nil
@@ -75,7 +89,7 @@ module Takibi
     end
 
     def self.unpack binary
-      MessagePack.unpack binary.unpack("m").first
+      MessagePack.unpack binary.unpack("m").first rescue []
     end
 
     def self.regist article

@@ -1,4 +1,5 @@
 # coding: utf-8
+require 'lib/parser'
 
 module Takibi
   class NiftynewsParser < Parser
@@ -12,7 +13,7 @@ class Takibi::NiftynewsParser
 
   rss_regex            %r(news.nifty.com/cs/)
 
-  title_xpath          '//div[@id="mainDtl"]/h2/text()'
+  title_xpath          '//div[@id="mainDtl"]//h2/text()'
   published_time_xpath '//p[@class="posted"]/text()'
   author_xpath         '//p[@class="posted"]/a/text()'
   images_xpath         '//div[@class="ph"]'
@@ -49,4 +50,12 @@ class Takibi::NiftynewsParser
       end
     end
   end
+end
+
+if $0 == __FILE__ then
+  require 'open-uri'
+  url = "http://news.nifty.com/cs/magazine/detail/spa-20110520-01/1.htm"
+  src = open(url).read
+  parsed = Takibi::NiftynewsParser.extract src, url
+  puts parsed["title"]
 end

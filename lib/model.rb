@@ -13,15 +13,16 @@ module Takibi
     def self.db
       return @@db if defined? @@db and @@db
       @@db = self.mysql_db
+#      @@db = self.sqlite_db
     end
 
     def self.mysql_db
       Sequel.mysql("cuzicnet_takibi", 
-		    :user => 'cuzicnet_takibi',
-		    :password => $db_password,
-		    :host => 'localhost',
+                    :user => 'cuzicnet_takibi',
+                    :password => $db_password,
+                    :host => 'localhost',
                     :encoding => 'utf8'
-	)
+        )
     end
 
     def self.sqlite_db
@@ -33,6 +34,7 @@ module Takibi
       db = Sequel.sqlite(db_path, :timeout => 20_000)
       db.loggers << create_logger
       db.sql_log_level = :debug
+      db.sql_log_level = :info
       db
     end
 
@@ -131,6 +133,7 @@ module Takibi
         "title"          => row[:title],
         "author"         => row[:author],
         "published_time" => row[:published_time],
+        "created_at"     => row[:created_at],
         "body"           => row[:body],
         "images"         => unpack(row[:images]),
       }

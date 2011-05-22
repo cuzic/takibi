@@ -1,4 +1,7 @@
 # coding: utf-8
+require 'lib/common'
+require 'nokogiri'
+require 'digest/md5'
 
 module Takibi
   class Parser

@@ -2,6 +2,7 @@
 require 'uri'
 require 'rubygems'
 require 'nokogiri'
+require 'digest/md5'
 require File.join(TAKIBI_ROOT, "lib", "model")
 require File.join(TAKIBI_ROOT, "lib", "common")
 

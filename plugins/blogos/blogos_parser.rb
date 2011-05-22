@@ -1,4 +1,5 @@
 # coding: utf-8
+require 'lib/parser'
 
 module Takibi
   class BlogosParser < Parser
@@ -13,7 +14,7 @@ class Takibi::BlogosParser
   rss_regex %r(news.livedoor.com/article/detail)
 
   #title_xpath          '//div[@class="article-title" or @id="article-title"]/h1/text()'
-  title_xpath          '//meta[@name="title"]/@content'
+  title_xpath          '//meta[@name="title"]/@content | //div[@id="article-title"]/h1'
   published_time_xpath '//p[@class="article-date"]/text()'
   author_xpath         '//p[@class="author"]/text()'
   images_xpath         ''
@@ -22,14 +23,12 @@ class Takibi::BlogosParser
   body_xpath           '//div[@class="article"]'
   noisy_elems_xpaths   %W()
   next_link_xpath      '//td[@class="link-next"]/a'
+end
 
-  def self.extract_author doc, url
-    author = super doc, url
-    return author
-  end
-
-  def self.extract_published_time doc, url
-    time = super doc, url
-    return time
-  end
+if $0 == __FILE__ then
+  require 'open-uri'
+  url = "http://news.livedoor.com/article/detail/5575137/"
+  src = open(url).read
+  parsed = Takibi::BlogosParser.extract src, url
+  puts parsed["title"]
 end

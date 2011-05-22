@@ -101,56 +101,92 @@ module Takibi
       mimetype      = file_read "template/mimetype"
       container_xml = file_read "template/container.xml"
 
-      opf_items = [{
-          :id   => "toc",
-          :href => "toc.xhtml",
-          :type => "application/xhtml+xml"
-      }]
+      struct = Struct.new :md5, :filename, :title, :created_at,
+        :id, :feed, :href, :type, :body, :images
 
-      opf_itemrefs = [{:idref => "toc"}]
-
-      nav_points   = []
-      toc_articles = []
-      articles     = []
-      images       = []
-
-      ids = []
+      articles = []
       Articles.fetch filter_options do |record|
-        md5 = record["md5"]
-        filename = md5 + ".xhtml"
-        opf_items << {
-          :id => md5,
-          :href => filename,
-          :type => record["type"],
-        }
-        opf_items += record["images"].map do |image|
-          {:id   => image["md5"],
-           :href => image["filename"],
-           :type => image["type"]
-          }
-        end
-        opf_itemrefs << {:idref => md5 }
+        article = struct.new
 
-        nav_points << {
-          :label_text  => record["title"],
-          :content_src => filename
-        }
-        toc_articles << [record["title"], record["created_at"],
-		         record["feed"],  filename]
-
-        articles << {
-          :filename => filename,
-          :file => self.format(record)
-        }
-        record["images"].each do |image|
-          images << {
+        md5                = record["md5"]
+        article.md5        = md5
+        article.feed       = record["feed"]
+        article.filename   = md5 + ".xhtml"
+        article.title      = record["title"]
+        article.type       = record["type"]
+        article.body       = self.format record
+        article.created_at = record["created_at"]
+        article.images     = record["images"].map do |image|
+          image_md5 = image["md5"]
+          {
+            :id   => image_md5,
             :filename => image["filename"],
-            :file     => image["file"]
+            :file => image["file"],
+            :type => image["type"]
           }
         end
+        articles << article
+      end
+
+      articles = articles.sort_by do |article|
+        [article.feed, article.created_at]
+      end
+
+      opf_itemrefs = articles.inject([{:idref => "toc" }]) do |r, article|
+        r << {:idref => article["md5"]}
+      end
+
+      nav_points = articles.map do |article|
+        {
+          :label_text  => article.title,
+          :content_src => article.filename
+        }
+      end
+
+      toc_articles = articles.map do |article|
+        [article.title, article.created_at,
+         article.feed,  article.filename]
+      end
+
+      opf_items = articles.inject([{
+                          :id   => "toc",
+                          :href => "toc.xhtml",
+                          :type => "application/xhtml+xml"
+                        }]) do |r, article|
+        r << {
+          :id   => article.md5,
+          :href => article.filename,
+          :type => article.type
+        }
+        article.images.each do |image|
+          r << {
+            :id   => image[:id],
+            :href => image[:filename],
+            :type => image[:type]
+          }
+        end
+        r
+      end
+
+      images = articles.inject([]) do |r, article|
+        article.images.each do |image|
+          r << {
+            :filename => image[:filename],
+            :file     => image[:file]
+          }
+        end
+        r
+      end
+
+      entries = articles.map do |article|
+        {
+          :filename => article.filename,
+          :file => article.body
+        }
       end
 
       name = "takibi"
+
       content_opf = erb_result "content.opf.erb" do
         @uuid      = @@uuid
         @title     = name + " " + Time.now.strftime("%Y-%m-%d")
@@ -185,11 +221,11 @@ module Takibi
         zip.output "OEBPS/content.opf",      content_opf
         zip.output "OEBPS/toc.ncx",          toc_ncx
         zip.output "OEBPS/toc.xhtml",        toc_xhtml
-        articles.each do |article|
-          zip.output "OEBPS/" + article[:filename], article[:file]
+        entries.each do |entry|
+          zip.output "OEBPS/" + entry[:filename], entry[:file]
         end
         images.each do |image|
-          zip.output "OEBPS/" + image[:filename],   image[:file]
+          zip.output "OEBPS/" + image[:filename], image[:file]
         end
       end
     end

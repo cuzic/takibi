@@ -188,7 +188,6 @@ module Takibi
       name = "takibi"
 
       content_opf = erb_result "content.opf.erb" do
-        @uuid      = @@uuid
         @title     = name + " " + Time.now.strftime("%Y-%m-%d")
         @author    = name
         @publisher = name
@@ -197,7 +196,6 @@ module Takibi
       end
 
       toc_ncx = erb_result "toc.ncx.erb" do
-        @uuid       = @@uuid
         @title      = name
         @author     = name
         @nav_points = nav_points

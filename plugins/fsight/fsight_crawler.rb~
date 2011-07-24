@@ -1,0 +1,8 @@
+# encoding: utf-8
+#
+
+module Takibi
+  class ItproCrawler < Crawler
+    rss_url "http://rss.rssad.jp/rss/livedoornews/blogos/summary.xml"
+  end
+end

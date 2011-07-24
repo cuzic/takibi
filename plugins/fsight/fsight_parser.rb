@@ -11,7 +11,7 @@ class Takibi::FsightParser
     super src, url
   end
 
-  rss_regex %r(news.livedoor.com/article/detail)
+  rss_regex %r(fsight.jp/article)
 
   title_xpath          '//h1[@class="heading"]'
   published_time_xpath '//div[@class="date"]'

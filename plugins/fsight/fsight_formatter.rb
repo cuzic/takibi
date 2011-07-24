@@ -2,7 +2,7 @@
 #
 
 module Takibi
-  class BlogosFormatter < Formatter
+  class FsightFormatter < Formatter
     def self.format article, *args
       super article, *args
     end

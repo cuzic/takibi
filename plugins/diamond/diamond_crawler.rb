@@ -20,6 +20,8 @@ module Takibi
       def m.get url
         page = super url
         return page.body
+      rescue
+        nil
       end
       @httpclient = m
       return @httpclient

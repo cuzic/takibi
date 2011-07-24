@@ -128,6 +128,7 @@ module Takibi
         articles << article
       end
 
+      return if articles.length == 0
       articles = articles.sort_by do |article|
         [article.feed, article.created_at]
       end

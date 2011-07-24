@@ -68,7 +68,7 @@ class Takibi::Parser
   end
 
   def self.extract_title doc, url
-    title = doc.xpath(title_xpath).text.strip
+    title = doc.xpath(title_xpath).first.text.strip
     return title
   end
 
@@ -78,7 +78,7 @@ class Takibi::Parser
   end
 
   def self.extract_published_time doc, url
-    time = doc.xpath(published_time_xpath).text.strip
+    time = doc.xpath(published_time_xpath).first.text.strip
 
     digits = time.scan(/\d\d?/).map{|s| "%02d" % s.to_i}.join("")
     return if digits.empty?

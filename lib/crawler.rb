@@ -64,7 +64,9 @@ module Takibi
 
           after_crawl article
 
-          Articles.regist article
+          if article["id"] then
+            Articles.regist article
+          end
           UrlsToCrawl.finish url
         rescue Takibi::ParserNotFoundException => e
           raise e
@@ -122,7 +124,7 @@ module Takibi
         end
       end.reject! {|value| value.nil? }
 
-      article["id"] = Digest::MD5.digest article["url"] + article["title"]
+      article["id"] = Digest::MD5.digest article["url"] + article["title"] rescue nil
     end
 
     def self.httpclient

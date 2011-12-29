@@ -1,5 +1,0 @@
-module Takibi
-  NbonlineConf = {"email"    => "sample@example.com",
-                  "userId"   => "your-username",
-                  "password" => "your-password"}
-end

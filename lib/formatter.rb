@@ -1,7 +1,7 @@
-# coding: utf-8
+# -*- encoding: utf-8 -*-
 
 require 'erb'
-require 'rubygems'
+require 'rubygems' rescue nil
 require 'cgi'
 require 'zip/zip'
 require 'uuid'
@@ -42,7 +42,19 @@ module Takibi
     end
 
     def file_read filename
-      return File.open(filename, "rb") { |file| file.read }
+      if "1.9" <= RUBY_VERSION then
+        return File.open(filename, "rb:utf-8") { |file| file.read }
+      else
+        return File.open(filename, "rb") { |file| file.read }
+      end
+    end
+  end
+
+  unless defined? Generator then
+    begin
+      require 'generator'
+    rescue LoadError
+      Generator = Enumerator::Generator
     end
   end
 
@@ -97,7 +109,37 @@ module Takibi
       end
     end
 
-    def self.epub epub_filename, filter_options = {}
+    def self.epub epub_filename, duration, feeds = nil
+      options = []
+      case duration
+      when /(\d+)d/
+        day = $1
+        options << ["created_at > ?", Time.now - 60*60*24*(day.to_i)]
+      end
+
+      generator = nil
+      if feeds and feeds.include?(",") then
+        generator = Generator.new do |g|
+          feed_ary = feeds.split(",")
+          Articles.fetch_multiple_feeds feed_ary, day do |record|
+            g.yield record
+          end
+        end
+      elsif feeds
+        options << ["feed = ?", feeds]
+      end
+
+      if generator.nil? then
+        generator = Generator.new do |g|
+          Articles.fetch options do |record|
+            g.yield record
+          end
+        end
+      end
+      compose_epub epub_filename, generator
+    end
+
+    def self.compose_epub epub_filename, generator
       mimetype      = file_read "template/mimetype"
       container_xml = file_read "template/container.xml"
 
@@ -105,7 +147,7 @@ module Takibi
         :id, :feed, :href, :type, :body, :images
 
       articles = []
-      Articles.fetch filter_options do |record|
+      generator.each do |record|
         article = struct.new
 
         md5                = record["md5"]
@@ -119,19 +161,16 @@ module Takibi
         article.images     = record["images"].map do |image|
           image_md5 = image["md5"]
           {
-            :id   => image_md5,
+            :id       => image_md5,
             :filename => image["filename"],
-            :file => image["file"],
-            :type => image["type"]
+            :file     => image["file"],
+            :type     => image["type"]
           }
         end
         articles << article
       end
 
       return if articles.length == 0
-      articles = articles.sort_by do |article|
-        [article.feed, article.created_at]
-      end
 
       opf_itemrefs = articles.inject([{:idref => "toc" }]) do |r, article|
         r << {:idref => article["md5"]}

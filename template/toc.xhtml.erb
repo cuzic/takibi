@@ -9,9 +9,7 @@
   <h1>記事一覧</h1>
   <hr/>
   <%- prev_feed = nil %>
-  <%- @articles.sort_by do |title, created_at, feed, filename|
-    [feed || "",  created_at || ""]
-  end.each do |title, created_at, feed, filename| -%>
+  <%- @articles.each do |title, created_at, feed, filename| -%>
     <%- if prev_feed != feed then -%>
    <hr/>
    <h3> <%= feed %> </h3>

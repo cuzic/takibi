@@ -4,7 +4,7 @@
 require 'optparse'
 
 TakibiConf = {}
-TAKIBI_ROOT = File.join(File.dirname(__FILE__), "..")
+TAKIBI_ROOT = File.join(File.expand_path(File.dirname(__FILE__)), "..")
 opt = OptionParser.new
 
 opt.on("-f feed", "--feed feed",
@@ -21,9 +21,9 @@ opt.on("-o filename", "--output filename",
        "output filename (usually used  --action epub)") do |filename|
   TakibiConf["filename"] = filename
 end
-opt.on("-c condition", "--condition condition",
-       "output articles which matches specified condition") do |cond|
-  TakibiConf["condition"] = cond
+opt.on("-d duration", "--duration duration",
+       "duration of target articles") do |duration|
+  TakibiConf["duration"] = duration
 end
 opt.parse!(ARGV)
 
@@ -32,7 +32,11 @@ require File.join(TAKIBI_ROOT, "lib", "takibi")
 feed = TakibiConf["feed"]
 feed = feed.to_s if feed
 plugin_dir = if feed then
-               File.join(TAKIBI_ROOT, "plugins", feed.to_s)
+               if feed.include?(",") then
+                 File.join(TAKIBI_ROOT, "plugins{#{feed.to_s}")
+               else
+                 File.join(TAKIBI_ROOT, "plugins", feed.to_s)
+               end
              else
                File.join(TAKIBI_ROOT, "plugins", "*")
              end
@@ -66,20 +70,8 @@ when :crawl_article
 when :epub
   options = []
   require File.join(TAKIBI_ROOT, "lib", "formatter.rb")
-  case TakibiConf["condition"]
-  when "last24hours"
-    options << ["created_at > ?", Time.now - 60*60*24]
-  when "last3days"
-    options << ["created_at > ?", Time.now - 60*60*24*3]
-  when "last5days"
-    options << ["created_at > ?", Time.now - 60*60*24*5]
-  when "last7days"
-    options << ["created_at > ?", Time.now - 60*60*24*7]
-  end
-  if feed then
-    options << "feed = '#{feed}'"
-  end
-  Takibi::Formatter.epub TakibiConf["filename"], options
+  duration = TakibiConf["duration"]
+  Takibi::Formatter.epub TakibiConf["filename"], duration, feed
 when :test_article
   require File.join(TAKIBI_ROOT, "lib", "parser.rb")
   url = "http://news.nifty.com/cs/topics/detail/110101351445/1.htm"

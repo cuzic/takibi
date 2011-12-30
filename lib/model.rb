@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 require 'rubygems'
 require 'sequel'
 require File.join(TAKIBI_ROOT, "lib", "common")
-require File.join(TAKIBI_ROOT, "lib", "db_password")
+require File.join(TAKIBI_ROOT, "lib", "database_setting")
 
 module Takibi
   class Base
@@ -17,12 +18,12 @@ module Takibi
     end
 
     def self.mysql_db
-      Sequel.mysql("cuzicnet_takibi", 
-                    :user => 'cuzicnet_takibi',
-                    :password => $db_password,
-                    :host => 'localhost',
-                    :encoding => 'utf8'
-        )
+      Sequel.mysql(DATABASE,
+          :user     => USER,
+          :password => PASSWORD,
+          :host     => HOST,
+          :encoding => ENCODING
+        ) << "SET NAMES utf8"
     end
 
     def self.sqlite_db
@@ -117,26 +118,67 @@ module Takibi
       case filter_options
       when Array
         recordset = filter_options.inject(recordset) do |rs, opt|
-          rs.filter(opt)
+          rs.filter(*opt)
         end
       end
+      recordset = recordset.order :feed, :created_at
       recordset.each do |row|
         yield fetch_row(row)
       end
     end
 
+    def self.fetch_multiple_feeds feeds, day
+      options = []
+      options << ["created_at > now() - INTERVAL ? day", day.to_i]
+      options << ["feed in ?", feeds]
+      hash = {:day => day, :feeds => feeds}
+      order_id = feeds.each.with_index.
+        inject("CASE feed") do |memo, (elem, index)|
+        memo + " WHEN '#{elem}' THEN #{index}"
+      end + " END AS order_id"
+      recordset = db[table_name]
+      case options
+      when Array
+        recordset = options.inject(recordset) do |rs, opt|
+          rs.filter(*opt)
+        end
+      end
+      sql = recordset.order(:order_id).sql
+      sql = sql.gsub(" *", " *, #{order_id}")
+      recordset.with_sql(sql).each do |row|
+        record = fetch_row(row)
+        record["order_id"] = row[:order_id]
+        yield record
+      end
+    end
+
     def self.fetch_row row
-      return {
-        "url"            => row[:url],
-        "feed"           => row[:feed],
-        "md5"            => row[:md5],
-        "title"          => row[:title],
-        "author"         => row[:author],
-        "published_time" => row[:published_time],
-        "created_at"     => row[:created_at],
-        "body"           => row[:body],
-        "images"         => unpack(row[:images]),
-      }
+      if "1.9" < RUBY_VERSION then
+        article = {
+          "url"            => row[:url].force_encoding("utf-8"),
+          "feed"           => (row[:feed] || "").force_encoding("utf-8"),
+          "md5"            => (row[:md5] || "").force_encoding("utf-8"),
+          "title"          => (row[:title] || "").force_encoding("utf-8"),
+          "author"         => (row[:author] || "").force_encoding("utf-8"),
+          "published_time" => row[:published_time],
+          "created_at"     => row[:created_at],
+          "body"           => (row[:body] || "").force_encoding("utf-8"),
+          "images"         => unpack((row[:images] || "").force_encoding("utf-8")),
+        }
+      else
+        article = {
+          "url"            => row[:url],
+          "feed"           => row[:feed],
+          "md5"            => row[:md5],
+          "title"          => row[:title],
+          "author"         => row[:author],
+          "published_time" => row[:published_time],
+          "created_at"     => row[:created_at],
+          "body"           => row[:body],
+          "images"         => unpack(row[:images])
+        }
+      end
+      return article
     end
   end
 end

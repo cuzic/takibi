@@ -1,5 +1,5 @@
-# coding: utf-8
-require 'lib/common'
+# -*- encoding: utf-8 -*-
+require File.join(TAKIBI_ROOT, 'lib/common')
 require 'nokogiri'
 require 'digest/md5'
 

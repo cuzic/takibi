@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 require File.join(File.dirname(__FILE__), "crawler")
 require File.join(File.dirname(__FILE__), "formatter")
 require File.join(File.dirname(__FILE__), "parser")

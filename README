@@ -1,3 +1,20 @@
+takibi is 3 layer epub generating framework.
+
+ 1. Model: like Rails, the layer of access to database.
+ 2. Parser: Web fetching, Scraping, dicing, and slicing layer
+ 3. Formatter: to make epub, compose epub article HTML from parsed data.
+
+takibi Framework does as follows:
+  1. Fetching WEB articles specified by Parser.
+  2. Store parsed article to database.
+  3. Compose HTML as specified format of Formatter
+
+Requirement:
+  libxml2-dev, libxslt-dev for nokogiri
+
+  ex)
+  aptitude install libxml2-dev libxslt-dev
+  
 1. Setup
   gem install nokogiri
   gem install sequel

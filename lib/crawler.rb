@@ -1,6 +1,6 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 require 'uri'
-require 'rubygems'
+require 'rubygems' rescue nil
 require 'nokogiri'
 require 'digest/md5'
 require File.join(TAKIBI_ROOT, "lib", "model")

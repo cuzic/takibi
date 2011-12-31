@@ -19,7 +19,7 @@ class Takibi::JbpressParser
   image_caption_xpath  './div[@class="figure-caption"]//text()'
 
   body_xpath           '//div[@id="main-contents"]'
-  noisy_elems_xpaths   %W(//div[@id="mp-ie"] //div[@class="text-ad-chumoku"])
+  noisy_elems_xpaths   %W(//div[@id="mp-ie"] //div[@class="mp-ie"] //div[@class="text-ad-chumoku"] //div[@id="article-end"] //div[@id="article-pagebottom"])
   next_link_xpath      '//div[@class="next_p"]/a'
 
   def self.extract_author doc, url

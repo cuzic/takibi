@@ -3,6 +3,6 @@
 
 module Takibi
   class BlogosCrawler < Crawler
-    rss_url "http://rss.rssad.jp/rss/livedoornews/blogos/summary.xml"
+    rss_url "http://blogos.com/feed/article_recent/"
   end
 end

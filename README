@@ -23,3 +23,14 @@ Requirement:
   gem install zip
   gem install msgpack
   gem install mechanize
+
+2. example
+
+ 2.a: crawl registered rss
+   ./takibi --action crawl_rss
+ 
+ 2.b: crawl articles of rss feed
+   ./takibi --action rss
+ 
+ 2.c: compose epub
+   ./takibi -f jbpress,nbonline -d 3d -a epub -o `date +%Y-%m-%d`.epub

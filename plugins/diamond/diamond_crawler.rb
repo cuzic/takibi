@@ -5,6 +5,11 @@ require 'mechanize'
 module Takibi
   class DiamondCrawler < Crawler
     rss_url "http://feed.ismedia.jp/rss/diamond/feed.xml"
+
+    def match url
+      url.include?("diamond.jp/")
+    end
+
     def self.httpclient
       return @httpclient if defined? @httpclient and @httpclient
       load_config

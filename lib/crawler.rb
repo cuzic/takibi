@@ -56,7 +56,7 @@ module Takibi
     def self.crawl_article
       UrlsToCrawl.urls_to_crawl do |url|
         begin
-          article = get_whole_article url
+          article = fetch url
           if article.nil? then
             UrlsToCrawl.finish url
             next
@@ -74,7 +74,34 @@ module Takibi
       end
     end
 
-    def self.get_whole_article url
+    def self.fetch url
+      crawler = find_crawler url
+      if crawler.nil? then
+        crawler = self
+      end
+      crawler.fetch_whole_article src, url
+    end
+    
+    def self.find_crawler url
+      crawler_files_glob =
+        File.join(TAKIBI_ROOT, "plugins", "*", "*_crawler.rb")
+      Dir.glob(crawler_files_glob).each do |rbscript|
+        require rbscript
+      end
+      Takibi.constants.grep(/.+Crawler$/).sort.map do |name|
+        Takibi.const_get(name)
+      end.find do |crawler|
+        if crawler.respond_to? :match then
+          crawler.match url
+        end
+      end
+    end
+
+    def self.match url
+      return false
+    end
+
+    def self.fetch_whole_article url 
       article = {}
       begin
         src = httpclient.get url
@@ -84,7 +111,7 @@ module Takibi
           case
           when key == "body"
             if lhs then
-	      lhs << "\n" << rhs
+              lhs << "\n" << rhs
             else
               rhs
             end

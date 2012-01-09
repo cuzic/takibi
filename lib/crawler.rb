@@ -125,6 +125,12 @@ module Takibi
         end
       end while url
       return article
+    rescue MessagePack::UnpackError => e
+      $stderr.puts e
+      return nil
+    rescue Takibi::ParserNotFoundException => e
+      $stderr.puts e
+      return nil
     rescue StandardError => e
       case e.to_s
       when /404 Not Found/

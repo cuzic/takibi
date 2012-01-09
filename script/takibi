@@ -51,6 +51,7 @@ when :crawl_rss
   else
     Takibi.constants.grep(/.+Crawler$/) do |classname|
       crawler = Takibi.const_get(classname)
+      p crawler
       crawler.crawl_rss
     end
   end

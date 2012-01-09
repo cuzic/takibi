@@ -143,7 +143,7 @@ module Takibi
           rs.filter(*opt)
         end
       end
-      sql = recordset.order(:order_id).sql
+      sql = recordset.order(:order_id, :created_at).sql
       sql = sql.gsub(" *", " *, #{order_id}")
       recordset.with_sql(sql).each do |row|
         record = fetch_row(row)

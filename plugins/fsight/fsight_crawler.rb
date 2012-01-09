@@ -10,6 +10,10 @@ module Takibi
   class FsightCrawler < Crawler
     rss_url "http://www.fsight.jp/rss/article/all/all/rss.xml"
 
+    def match url
+      url.include?("fsight.jp/")
+    end
+
     def self.httpclient
       return @httpclient if defined? @httpclient and @httpclient
       load_config

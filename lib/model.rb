@@ -59,13 +59,13 @@ module Takibi
   class UrlsToCrawl < Base
     table_name :urls_to_crawl
 
-    def self.append_urls urls
+    def self.append_urls urls, feed
       count = 0
       db.transaction do
         urls.each do |url|
           r = db[table_name].first(:url => url)
           unless r
-            append({"url" => url}) 
+            append({"url" => url, "feed" => feed}) 
             count += 1
           end
         end
@@ -75,7 +75,7 @@ module Takibi
 
     def self.urls_to_crawl
       db[table_name].filter("parsed is null").each do |record|
-        yield record[:url]
+        yield record[:url], record[:feed]
       end
     end
 

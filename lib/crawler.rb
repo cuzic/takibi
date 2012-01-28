@@ -27,7 +27,8 @@ module Takibi
       curls = urls.map do |url|
         self.get_canonical_url url
       end
-      count = UrlsToCrawl.append_urls curls
+      feed = self.to_s[/(.+)Crawler/, 1]
+      count = UrlsToCrawl.append_urls curls, feed
     end
 
     def self.get_canonical_url url
@@ -54,15 +55,16 @@ module Takibi
     end
 
     def self.crawl_article
-      UrlsToCrawl.urls_to_crawl do |url|
+      UrlsToCrawl.urls_to_crawl do |url, feed|
         begin
-          article = fetch url
+          crawler = Takibi.const_get "#{feed}Crawler" rescue self
+          article = crawler.fetch url
           if article.nil? then
             UrlsToCrawl.finish url
             next
           end
 
-          after_crawl article
+          crawler.after_crawl article
 
           if article["id"] then
             Articles.regist article

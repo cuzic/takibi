@@ -3,6 +3,7 @@ Sequel.migration do
     create_table :urls_to_crawl do
       primary_key :id
       String :url, :null => false
+      String :feed, :null => false
       TrueClass :parsed
       DateTime :created_at
       DateTime :updated_at

@@ -79,7 +79,7 @@ module Takibi
       if crawler.nil? then
         crawler = self
       end
-      crawler.fetch_whole_article src, url
+      crawler.fetch_whole_article url
     end
     
     def self.find_crawler url

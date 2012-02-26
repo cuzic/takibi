@@ -57,8 +57,9 @@ module Takibi
     def self.crawl_article
       UrlsToCrawl.urls_to_crawl do |url, feed|
         begin
-          crawler = Takibi.const_get "#{feed}Crawler" rescue self
-          article = crawler.fetch url
+          crawler = find_crawler url
+          crawler ||= self
+          article = crawler.fetch_whole_article url
           if article.nil? then
             UrlsToCrawl.finish url
             next
@@ -76,14 +77,6 @@ module Takibi
       end
     end
 
-    def self.fetch url
-      crawler = find_crawler url
-      if crawler.nil? then
-        crawler = self
-      end
-      crawler.fetch_whole_article url
-    end
-    
     def self.find_crawler url
       crawler_files_glob =
         File.join(TAKIBI_ROOT, "plugins", "*", "*_crawler.rb")
@@ -149,7 +142,7 @@ module Takibi
           type = "image/jpeg"
           digest = Digest::MD5.hexdigest(image["url"])
           filename = digest + ".jpg"
-          image["file"]     = httpclient.get(image["url"])
+          image["file"]     = httpclient.get(image["url"]) rescue nil
           image["filename"] = filename
           image["type"]     = type
           image["md5"]      = digest

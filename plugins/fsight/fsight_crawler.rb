@@ -16,6 +16,10 @@ module Takibi
       url.include?("fsight.jp/")
     end
 
+    def match url
+      url.include?("fsight.jp/")
+    end
+
     def self.httpclient
       # return @httpclient if defined? @httpclient and @httpclient
       load_config

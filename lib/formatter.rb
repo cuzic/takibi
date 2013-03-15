@@ -227,7 +227,7 @@ module Takibi
       name = "takibi"
 
       content_opf = erb_result "content.opf.erb" do
-        @title     = title + " " + Time.now.strftime("%Y-%m-%d")
+        @title     = title[0, 8] + " " + Time.now.strftime("%Y-%m-%d")
         @author    = name
         @publisher = name
         @items     = opf_items.uniq

@@ -136,10 +136,10 @@ module Takibi
           end
         end
       end
-      compose_epub epub_filename, generator
+      compose_epub epub_filename, generator, feeds
     end
 
-    def self.compose_epub epub_filename, generator
+    def self.compose_epub epub_filename, generator, title
       mimetype      = file_read "template/mimetype"
       container_xml = file_read "template/container.xml"
 
@@ -159,9 +159,8 @@ module Takibi
         article.body       = self.format record
         article.created_at = record["created_at"]
         article.images     = record["images"].map do |image|
-          image_md5 = image["md5"]
           {
-            :id       => image_md5,
+            :id       => image["md5"],
             :filename => image["filename"],
             :file     => image["file"],
             :type     => image["type"]
@@ -196,7 +195,7 @@ module Takibi
         r << {
           :id   => article.md5,
           :href => article.filename,
-          :type => article.type
+          :type => article.type || "application/xhtml+xml"
         }
         article.images.each do |image|
           r << {
@@ -228,17 +227,19 @@ module Takibi
       name = "takibi"
 
       content_opf = erb_result "content.opf.erb" do
-        @title     = name + " " + Time.now.strftime("%Y-%m-%d")
+        @title     = title + " " + Time.now.strftime("%Y-%m-%d")
         @author    = name
         @publisher = name
         @items     = opf_items.uniq
         @itemrefs  = opf_itemrefs
+        @uuid      = @@uuid
       end
 
       toc_ncx = erb_result "toc.ncx.erb" do
         @title      = name
         @author     = name
         @nav_points = nav_points
+        @uuid      = @@uuid
       end
 
       toc_xhtml = erb_result "toc.xhtml.erb" do

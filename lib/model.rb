@@ -163,7 +163,7 @@ module Takibi
           "published_time" => row[:published_time],
           "created_at"     => row[:created_at],
           "body"           => (row[:body] || "").force_encoding("utf-8"),
-          "images"         => unpack((row[:images] || "").force_encoding("utf-8")),
+          "images"         => unpack((row[:images] || "").force_encoding("ASCII-8BIT")),
         }
       else
         article = {

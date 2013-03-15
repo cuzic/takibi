@@ -31,7 +31,15 @@ module Takibi
       count = UrlsToCrawl.append_urls curls, feed
     end
 
-    def self.get_canonical_url url
+    def self.get_canonical_url url, limit = 10
+      return url if limit == 0
+      uri = URI(url)
+      Net::HTTP.start(uri.host, uri.port) do |http|
+        response = http.head(uri.request_uri)
+        if Net::HTTPRedirection === response then
+          return get_canonical_url(response["location"], limit - 1)
+        end
+      end
       return url
     end
 
@@ -60,6 +68,7 @@ module Takibi
           crawler = find_crawler url
           crawler ||= self
           article = crawler.fetch_whole_article url
+
           if article.nil? then
             UrlsToCrawl.finish url
             next
@@ -67,7 +76,7 @@ module Takibi
 
           crawler.after_crawl article
 
-          if article["id"] then
+          if article["md5"] then
             Articles.regist article
           end
           UrlsToCrawl.finish url
@@ -129,6 +138,7 @@ module Takibi
     rescue StandardError => e
       case e.to_s
       when /404 Not Found/
+        $stderr.puts "404 Not Found"
         return nil
       else
         raise e
@@ -139,20 +149,23 @@ module Takibi
       article["images"].map! do |image|
         case image["url"]
         when /\.jpg$/i then
-          type = "image/jpeg"
-          digest = Digest::MD5.hexdigest(image["url"])
-          filename = digest + ".jpg"
-          image["file"]     = httpclient.get(image["url"]) rescue nil
-          image["filename"] = filename
-          image["type"]     = type
-          image["md5"]      = digest
-          image
+          begin
+            type = "image/jpeg"
+            digest = Digest::MD5.hexdigest(image["url"])
+            filename = digest + ".jpg"
+            binary            = httpclient.get(image["url"])
+            image["file"]     = binary
+            image["filename"] = filename
+            image["type"]     = type
+            image["md5"]      = digest
+            image
+          rescue
+            nil
+          end
         else
           nil
         end
       end.reject! {|value| value.nil? }
-
-      article["id"] = Digest::MD5.digest article["url"] + article["title"] rescue nil
     end
 
     def self.httpclient

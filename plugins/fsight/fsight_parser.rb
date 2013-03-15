@@ -11,15 +11,15 @@ class Takibi::FsightParser
     super src, url
   end
 
-  rss_regex %r(fsight.jp/article)
+  rss_regex %r(fsight.jp/)
 
-  title_xpath          '//h1[@class="heading"]'
-  published_time_xpath '//div[@class="date"]'
-  author_xpath         '//div[@class="author"]/text()'
-  images_xpath         ''
-  image_caption_xpath  ''
+  title_xpath          '//div[@class="article-Block"]/h1'
+  published_time_xpath '//li[@class="date"]'
+  author_xpath         '//li[@class="writer"]/a'
+  images_xpath         '//div[contains(@class, "alignright")]'
+  image_caption_xpath  '//div[contains(@class, "wp-caption-text")]'
 
-  body_xpath           '//div[@class="column"]'
+  body_xpath           '//div[@class="fs-content"]'
   noisy_elems_xpaths   %W(//div[@class="listBlock-tag"] //div[@class="headingBlock-article"]
                          //div[@class="columnBlock-value"]
                          //div[@class="columnBlock-socialBookmark"] //div[@class="listBlock-pagenation"])

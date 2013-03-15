@@ -8,7 +8,7 @@ module Takibi
     rss_url "http://business.nikkeibp.co.jp/rss/all_nbo.rdf"
 
     def self.httpclient
-      return @httpclient if defined? @httpclient and @httpclient
+      # return @httpclient if defined? @httpclient and @httpclient
       load_config
       m = Mechanize.new
       login_url = "https://signon.nikkeibp.co.jp/front/login/?ct=p&ts=nbo"
@@ -21,8 +21,14 @@ module Takibi
         end.click_button
       end
       def m.get url
-        page = super url
-        return page.body
+        begin
+          page = super url
+          return page.body
+        rescue Exception => e
+          $stderr.puts e.inspect
+          $stderr.puts e.class.ancestors
+          return nil
+        end
       end
       @httpclient = m
       return @httpclient
@@ -35,3 +41,8 @@ module Takibi
   end
 end
 
+if $0 == __FILE__
+  url = "http://business.nikkeibp.co.jp/article/manage/20130227/244292/?bv_rd"
+  body = NbonlineCrawler.get url
+  puts body
+end

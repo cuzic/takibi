@@ -20,7 +20,7 @@ class Takibi::NbonlineParser
   images_xpath         "#{body_xpath}/div[img]"
   image_caption_xpath  "./text()"
 
-  noisy_elems_xpaths   %W(//div[@id="naviBottom"])
+  noisy_elems_xpaths   %W(//div[@id="naviBottom"] //div[@class="magGuidance3"])
   next_link_xpath      '//div[@id="naviBottom"]//a[@class="now"]/following-sibling::a'
 
   def self.extract_author doc, url

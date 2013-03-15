@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+# encoding: utf-8
+
+def sendmail attachment
+  mail = File.join(ENV["HOME"], "smtp", "wamail")
+  arg = " --to cuzic@kindle.com --from mail@cuzic.net --smtp mail.cuzic.net"
+  arg += " --attachment \"#{attachment}\""
+
+  cmdline = "#{mail} #{arg}"
+  puts cmdline
+  system cmdline
+end
+
+def epub_dir
+  home = ENV["HOME"]
+  public_html = File.join(home, "public_html")
+  File.join(public_html, "epub")
+end
+
+def copy_epub epub
+
+  return unless File.file? epub
+
+  FileUtils.cp epub, epub_dir
+  filename = File.join(epub_dir, File.basename(epub))
+  FileUtils.chmod 0644, filename 
+  puts filename
+end
+
+def create_epub feed, epub
+  takibi = File.join(File.dirname(__FILE__), "takibi")
+  cmdline = "#{takibi} -f #{feed} -d 1d --action epub --output \"#{epub}\""
+  puts cmdline
+  system cmdline
+end
+
+def create_mobi epub
+  kindlegen = File.join(ENV["HOME"], "kindlegen", "kindlegen")
+  system "#{kindlegen} -c1 #{epub}"
+end
+
+tmp = File.join(File.dirname(__FILE__), "..", "tmp")
+
+%w(fsight,jbpress,nbonline,diamond,wedge,gendai
+   blogos niftynews).each do |feed|
+  epub = File.join(tmp , Time.now.strftime("%Y-%m-%d-#{feed}.epub"))
+  mobi = File.join(tmp , Time.now.strftime("%Y-%m-%d-#{feed}.mobi"))
+
+  create_epub feed, epub
+  copy_epub epub
+  puts epub
+  create_mobi epub
+  sendmail mobi
+end
+
+system <<SHELL
+  ls -1 #{epub_dir}/*.epub > #{epub_dir}/index.txt
+SHELL

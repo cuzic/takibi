@@ -120,14 +120,31 @@ class Takibi::Parser
   end
 
   def self.extract_images doc, url
-    doc.xpath(images_xpath).map do |div|
-      path = div.xpath('.//img').first[:src]
-      url  = URI.join(url, path).to_s
-      caption = div.xpath(image_caption_xpath).text.strip
-      {"url" => url, "caption" => caption}
+    urls = []
+    unless images_xpath.empty? then
+      urls += doc.xpath(images_xpath).map do |div|
+        path = div.xpath('.//img').first[:src]
+        src  = URI.join(url, path).to_s
+        caption = div.xpath(image_caption_xpath).text.strip
+        {"url" => src, "caption" => caption}
+      end
     end
-  rescue
-    return []
+    urls +=
+      doc.xpath(body_xpath + "//img").map do |img|
+        path = img[:src]
+        src = ""
+        if path.start_with?("http://")
+          src = path
+        else
+          src  = URI.join(url, path).to_s
+        end
+        caption = img[:title] || img[:alt]
+        {"url" => src, "caption" => caption}
+      end
+    urls
+  #rescue
+    #$stderr.puts $!.inspect
+    #return []
   end
 
   @@default_body_xpath = '//div[@id="main-contents"]'
@@ -149,11 +166,23 @@ class Takibi::Parser
     body.xpath('.//a[@href]').each do |anchor|
       begin
         path = anchor[:href].strip
-        url  = URI.join(url, path).to_s
-        anchor.set_attribute("href", url)
+        href  = URI.join(url, path).to_s
+        anchor.set_attribute("href", href)
         anchor.remove_attribute "onclick"
       rescue 
       end
+    end
+
+    body.xpath('.//img[@src]').each do |img|
+      path = img[:src].strip
+      if path.start_with?("http://") then
+        src = path
+      else
+        src  = URI.join(url, path).to_s
+      end
+      digest = Digest::MD5.hexdigest(src)
+      suffix = src[/(\.\w+)$/, 1]
+      img.set_attribute("src", "#{digest}#{suffix}")
     end
 
     noisy_elems_xpaths.each do |xpath|
